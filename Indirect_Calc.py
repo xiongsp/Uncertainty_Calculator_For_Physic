@@ -1,6 +1,8 @@
+import os
 import sympy as sy
 import decimal
 import numpy as np
+from Ruler_For_UC import rule_for_uc, get_decimal_digit
 
 history = []
 
@@ -15,10 +17,10 @@ def main():
     global history
     history = []
     print("不能将单位换成SI！但要保证uc、val单位一致！")
-    input_var = input('所含自变量:\n' ).split(' ')
+    input_var = input('所含自变量:\n').split(' ')
     for i in input_var:
         globals()[i] = sy.symbols(i)
-    input_val = input('各自变量读出值:\n' ).split(' ')
+    input_val = input('各自变量读出值:\n').split(' ')
     for i in input_val:
         input_val[input_val.index(i)] = decimal.Decimal(i)
     input_uc = input('各自变量绝对不确定度(uc):\n').split(' ')
@@ -50,14 +52,37 @@ def main():
             part_sum += tmp ** 2
             print(f"{input_var[input_uc.index(i)]} : {tmp}")
     val = origin_fun.subs(subs)
-    result = 0
     try:
         result = part_sum ** 0.5
     except:
         result = part_sum.sqrt()
 
     if input_to_ln:
-        print(f"\n相对不确定度ur: {result*100}%\n函数值: {val}\n绝对不确定度uc:{result * val}")
+        ruled_uc = rule_for_uc(result*val)
+        decimal_digit = get_decimal_digit(ruled_uc)
+        print(
+            f"""
+（beta）相对不确定度ur: {(result * 100):.2g}%
+（beta）函数值: {round(val,decimal_digit)}
+（beta）绝对不确定度uc:{ruled_uc}
+相对不确定度ur: {result * 100}%  
+函数值: {val}
+绝对不确定度uc:{result * val}
+        """)
     else:
         ur = result / val
-        print(f"\n相对不确定度ur: {ur * 100}%\n函数值: {val}\n绝对不确定度uc:{result}")
+        ruled_uc = rule_for_uc(result)
+        decimal_digit = get_decimal_digit(ruled_uc)
+        print(
+            f"""
+（beta）相对不确定度ur: {(ur * 100):.2g}%
+（beta）函数值: {round(val,decimal_digit)}
+（beta）绝对不确定度uc:{ruled_uc}
+相对不确定度ur: {(ur * 100)}%  
+函数值: {val}
+绝对不确定度uc:{result}
+        """)
+
+if os.getenv('--with-debug') == '1':
+    main()
+
